@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#f5a623">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fajas">
+<title>Calculadora de Faja</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --panel: #141720;
+    --border: #2a2f3e;
+    --accent: #f5a623;
+    --accent2: #4ecdc4;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --input-bg: #1a1f2e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--panel);
+    border-bottom: 2px solid var(--accent);
+    padding: 14px 20px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .topbar-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .topbar-title { font-size: 1.25rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+  .topbar-sub { font-size: 0.7rem; color: var(--muted); letter-spacing: 1px; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: #1a1f2e44;
+  }
+
+  /* PAGES */
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* UNIT SELECTOR */
+  .unit-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .unit-btn {
+    flex: 1;
+    padding: 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .unit-btn.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* INPUT FIELDS */
+  .field { margin-bottom: 14px; }
+
+  .field-label {
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .field-symbol {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--accent);
+    font-size: 0.85rem;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  input[type=number] {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    padding: 14px 52px 14px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  input[type=number]:focus { border-color: var(--accent); }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .input-unit {
+    position: absolute;
+    right: 14px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    pointer-events: none;
+  }
+
+  /* RESULT CARD */
+  .result-card {
+    background: linear-gradient(135deg, #1a1f2e, #141720);
+    border: 2px solid var(--accent);
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 16px;
+    text-align: center;
+    display: none;
+    animation: popIn 0.3s ease;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .result-card.show { display: block; }
+
+  .result-label-sm {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .result-main {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 2.6rem;
+    color: var(--accent);
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .result-unit-large {
+    font-size: 1.2rem;
+    color: var(--accent);
+    opacity: 0.7;
+  }
+
+  .result-chips {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .chip {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    color: var(--accent2);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .error-msg {
+    background: #2d1a1a;
+    border: 1px solid #ff6b6b44;
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #ff6b6b;
+    font-size: 0.82rem;
+    margin-top: 12px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  /* DIAGRAM TAB */
+  canvas {
+    width: 100%;
+    border-radius: 10px;
+    background: #0a0c10;
+    display: block;
+    border: 1px solid var(--border);
+  }
+
+  .formula-card {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 14px;
+  }
+
+  .formula-title {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .formula-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 2;
+  }
+
+  .formula-text .sym { color: var(--accent); }
+
+  .legend {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .legend-item {
+    background: var(--panel);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+  }
+
+  .legend-sym {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--accent);
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .legend-desc { color: var(--muted); }
+
+  /* INSTALL BANNER */
+  .install-banner {
+    background: linear-gradient(135deg, #1a2010, #141720);
+    border: 1px solid #4ecdc444;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px;
+    display: none;
+  }
+
+  .install-banner.show { display: flex; gap: 12px; align-items: center; }
+  .install-banner-text { flex: 1; font-size: 0.82rem; color: var(--text); }
+  .install-banner-text strong { color: var(--accent2); display: block; margin-bottom: 3px; }
+
+  .install-btn {
+    background: var(--accent2);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 10px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-icon">⚙</div>
+  <div>
+    <div class="topbar-title">Calculadora de Faja</div>
+    <div class="topbar-sub">Transmisión por poleas</div>
+  </div>
+</div>
+
+<!-- Install banner -->
+<div class="install-banner" id="installBanner">
+  <div class="install-banner-text">
+    <strong>📲 Instalar App</strong>
+    Añade al inicio para usar sin internet
+  </div>
+  <button class="install-btn" id="installBtn">Instalar</button>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('calc')">🔢 Calcular</div>
+  <div class="tab" onclick="showTab('diagram')">📐 Diagrama</div>
+  <div class="tab" onclick="showTab('info')">ℹ Fórmula</div>
+</div>
+
+<!-- PAGE: CALCULAR -->
+<div class="page active" id="page-calc">
+
+  <div class="section-label">Unidades</div>
+  <div class="unit-selector">
+    <div class="unit-btn active" onclick="setUnit('mm', this)">mm</div>
+    <div class="unit-btn" onclick="setUnit('cm', this)">cm</div>
+    <div class="unit-btn" onclick="setUnit('in', this)">pulg</div>
+  </div>
+
+  <div class="section-label">Medidas</div>
+
+  <div class="field">
+    <div class="field-label">
+      Diámetro polea grande
+      <span class="field-symbol">D</span>
+    </div>
+    <div class="input-wrap">
+      <input type="number" id="D" inputmode="decimal" placeholder="ej. 200" oninput="recalc()">
+      <span class="input-unit" id="uD">mm</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="field-label">
+      Diámetro polea pequeña
+      <span class="field-symbol">d</span>
+    </div>
+    <div class="input-wrap">
+      <input type="number" id="d" inputmode="decimal" placeholder="ej. 100" oninput="recalc()">
+      <span class="input-unit" id="ud">mm</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="field-label">
+      Distancia entre centros
+      <span class="field-symbol">C</span>
+    </div>
+    <div class="input-wrap">
+      <input type="number" id="C" inputmode="decimal" placeholder="ej. 400" oninput="recalc()">
+      <span class="input-unit" id="uC">mm</span>
+    </div>
+  </div>
+
+  <div class="error-msg" id="errMsg"></div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-label-sm">Longitud de faja</div>
+    <div class="result-main" id="resultVal">—</div>
+    <div class="result-chips" id="resultChips"></div>
+  </div>
+
+</div>
+
+<!-- PAGE: DIAGRAMA -->
+<div class="page" id="page-diagram">
+  <div class="section-label">Vista del sistema</div>
+  <canvas id="cv" height="280"></canvas>
+  <p style="font-size:0.75rem;color:var(--muted);text-align:center;margin-top:8px;">
+    Ingresa valores en la pestaña Calcular para actualizar
+  </p>
+</div>
+
+<!-- PAGE: FORMULA -->
+<div class="page" id="page-info">
+  <div class="section-label">Fórmula</div>
+  <div class="formula-card">
+    <div class="formula-title">Faja abierta — longitud primitiva</div>
+    <div class="formula-text">
+      L = 2<span class="sym">C</span> + (π/2)·(<span class="sym">D</span>+<span class="sym">d</span>) + (<span class="sym">D</span>-<span class="sym">d</span>)² / 4<span class="sym">C</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <span class="legend-sym">L</span>
+      <span class="legend-desc">Longitud de faja</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-sym">C</span>
+      <span class="legend-desc">Distancia entre centros</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-sym">D</span>
+      <span class="legend-desc">Diámetro polea grande</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-sym">d</span>
+      <span class="legend-desc">Diámetro polea pequeña</span>
+    </div>
+  </div>
+
+  <div class="formula-card" style="margin-top:14px;">
+    <div class="formula-title">Relación de transmisión</div>
+    <div class="formula-text">
+      i = <span class="sym">D</span> / <span class="sym">d</span>
+    </div>
+    <p style="font-size:0.78rem;color:var(--muted);margin-top:8px;">
+      Si D=200 y d=100 → i=2:1 (la polea pequeña gira el doble de rápido)
+    </p>
+  </div>
+
+  <div class="formula-card" style="margin-top:14px;">
+    <div class="formula-title">💡 Consejo práctico</div>
+    <p style="font-size:0.82rem;color:var(--muted);line-height:1.7;">
+      Al comprar la faja, suma <strong style="color:var(--text)">+2% al resultado</strong> para tener margen de ajuste. 
+      Las fajas comerciales vienen en tallas estándar, elige la más cercana <em>por encima</em> del valor calculado.
+    </p>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let unit = 'mm';
+
+// ── Tabs ──
+function showTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'diagram') drawDiagram(getVals());
+}
+
+// ── Unit ──
+function setUnit(u, el) {
+  unit = u;
+  document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  ['uD','ud','uC'].forEach(id => document.getElementById(id).textContent = u);
+  recalc();
+}
+
+// ── Values ──
+function getVals() {
+  return {
+    D: parseFloat(document.getElementById('D').value),
+    d: parseFloat(document.getElementById('d').value),
+    C: parseFloat(document.getElementById('C').value),
+  };
+}
+
+// ── Calc ──
+function recalc() {
+  const { D, d, C } = getVals();
+  const err = document.getElementById('errMsg');
+  const card = document.getElementById('resultCard');
+
+  if (!D || !d || !C || D <= 0 || d <= 0 || C <= 0) {
+    err.classList.remove('show'); card.classList.remove('show'); return;
+  }
+  if (C < (D + d) / 2) {
+    err.textContent = '⚠ La distancia C es muy pequeña para esas poleas';
+    err.classList.add('show'); card.classList.remove('show'); return;
+  }
+
+  err.classList.remove('show');
+
+  const L = 2*C + (Math.PI/2)*(D+d) + Math.pow(D-d,2)/(4*C);
+  const Lr = Math.round(L * 10) / 10;
+
+  // convert for display
+  let display = Lr + ' ' + unit;
+  let chips = [];
+
+  if (unit === 'mm') {
+    chips.push(`${(Lr/25.4).toFixed(1)} in`);
+    chips.push(`${(Lr/10).toFixed(1)} cm`);
+  } else if (unit === 'cm') {
+    chips.push(`${(Lr*10).toFixed(0)} mm`);
+    chips.push(`${(Lr/2.54).toFixed(1)} in`);
+  } else {
+    chips.push(`${(Lr*25.4).toFixed(0)} mm`);
+  }
+  chips.push(`Rel. ${(D/d).toFixed(2)}:1`);
+  chips.push(`+2% → ${(Lr*1.02).toFixed(0)} ${unit}`);
+
+  document.getElementById('resultVal').innerHTML =
+    `${Lr} <span class="result-unit-large">${unit}</span>`;
+  document.getElementById('resultChips').innerHTML =
+    chips.map(c => `<div class="chip">${c}</div>`).join('');
+  card.classList.add('show');
+  card.style.animation = 'none';
+  requestAnimationFrame(() => card.style.animation = '');
+}
+
+// ── Diagram ──
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+function drawDiagram(vals) {
+  const W = cv.offsetWidth || 340;
+  cv.width = W; cv.height = 280;
+  ctx.clearRect(0, 0, W, 280);
+
+  if (!vals || !vals.D || !vals.d || !vals.C) {
+    ctx.fillStyle = '#2a2f3e';
+    ctx.font = '13px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Ingresa los datos para ver el diagrama', W/2, 145);
+    return;
+  }
+
+  const { D, d, C } = vals;
+  if (C < (D+d)/2) return;
+
+  const maxDia = Math.max(D, d);
+  const totalW = C + maxDia;
+  const margin = 36;
+  const scale = Math.min((W - margin*2) / totalW, 220 / (maxDia * 1.4));
+
+  const R1 = (D/2)*scale;
+  const R2 = (d/2)*scale;
+  const Cpx = C*scale;
+  const cx1 = margin + R1;
+  const cx2 = cx1 + Cpx;
+  const cy = 145;
+
+  const angle = Math.asin(Math.min(1, (R1-R2)/Cpx));
+  const cosA = Math.cos(angle), sinA = Math.sin(angle);
+
+  const tx1=cx1+R1*sinA, ty1=cy-R1*cosA;
+  const tx2=cx2+R2*sinA, ty2=cy-R2*cosA;
+  const bx1=cx1-R1*sinA, by1=cy+R1*cosA;
+  const bx2=cx2-R2*sinA, by2=cy+R2*cosA;
+
+  // Belt
+  ctx.beginPath();
+  ctx.strokeStyle='#f5a623';
+  ctx.lineWidth=3;
+  ctx.shadowColor='#f5a62344'; ctx.shadowBlur=10;
+  ctx.moveTo(tx1,ty1); ctx.lineTo(tx2,ty2);
+  ctx.arc(cx2,cy,R2,-Math.PI/2+angle,Math.PI/2+angle,false);
+  ctx.lineTo(bx1,by1);
+  ctx.arc(cx1,cy,R1,Math.PI/2+angle,-Math.PI/2+angle,true);
+  ctx.stroke(); ctx.shadowBlur=0;
+
+  function pulley(x,y,r,label,val) {
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle='#1a1f2e'; ctx.fill();
+    ctx.strokeStyle='#4ecdc4'; ctx.lineWidth=2.5; ctx.stroke();
+    const hub=Math.max(r*0.25,5);
+    ctx.beginPath(); ctx.arc(x,y,hub,0,Math.PI*2);
+    ctx.fillStyle='#4ecdc4'; ctx.fill();
+    for(let i=0;i<4;i++){
+      const a=(i/4)*Math.PI*2;
+      ctx.strokeStyle='#4ecdc433'; ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(x+hub*Math.cos(a),y+hub*Math.sin(a));
+      ctx.lineTo(x+r*Math.cos(a),y+r*Math.sin(a));
+      ctx.stroke();
+    }
+    ctx.fillStyle='#e8eaf0';
+    ctx.font=`bold ${Math.max(11,r*0.45)}px Rajdhani,sans-serif`;
+    ctx.textAlign='center';
+    ctx.fillText(label, x, y-r-8);
+    ctx.fillStyle='#f5a623';
+    ctx.font=`10px Share Tech Mono,monospace`;
+    ctx.fillText('Ø'+val, x, y-r-20);
+  }
+
+  pulley(cx1,cy,R1,'D',D);
+  pulley(cx2,cy,R2,'d',d);
+
+  // Center distance arrow
+  const ay = cy + R1 + 20;
+  ctx.strokeStyle='#6b728066'; ctx.lineWidth=1;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(cx1,ay); ctx.lineTo(cx2,ay); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#6b7280';
+  ctx.font='10px Share Tech Mono,monospace'; ctx.textAlign='center';
+  ctx.fillText('C = '+C, (cx1+cx2)/2, ay+16);
+}
+
+// ── PWA Install ──
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBanner').classList.remove('show');
+});
+
+// ── Service Worker ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+
+// Init diagram
+drawDiagram(null);
+window.addEventListener('resize', () => {
+  const {D,d,C} = getVals();
+  if(D&&d&&C) drawDiagram({D,d,C});
+});
+</script>
+</body>
+</html>
